@@ -7,6 +7,7 @@ import org.springframework.batch.core.configuration.annotation.EnableBatchProces
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
+import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.scope.context.ChunkContext;
 import org.springframework.batch.core.step.tasklet.Tasklet;
 import org.springframework.batch.repeat.RepeatStatus;
@@ -14,15 +15,35 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.transaction.PlatformTransactionManager;
 
 @Configuration
 @EnableBatchProcessing
 @EnableAutoConfiguration
 public class BatchConfiguration {
 
+	/**
+	 * <br> JobBuilderFactory(JobRepository)
+	 * <br> JobBuilder
+	 * <br> job{
+	 * <br>  Step, JobParameter Set(incrementer...)
+	 * <br> }
+	 * 
+	 */
+	
   @Autowired
   private JobBuilderFactory jobBuilderFactory;
 
+  /**
+   * <br> StepBuilderFactory(JobRepository, PlatformTransactionManager)
+   * <br> StepBuilder
+   * <br> Step{
+   * <br> 	Tasklet{
+   * <br>		return RepeatStatus(FINISHED, CONTINUABLE)
+   * <br>	}
+   * <br>
+   * <br> } 
+   */
   @Autowired
   private StepBuilderFactory stepBuilderFactory;
 
@@ -31,7 +52,6 @@ public class BatchConfiguration {
     return stepBuilderFactory.get("step1")
         .tasklet(new Tasklet() {
           public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) {
-            
         	  System.out.println("aaaaaaaaaaaaaa");
         	  return null;
           }
