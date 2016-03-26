@@ -47,11 +47,18 @@ public class BatchConfiguration {
   @Autowired
   private StepBuilderFactory stepBuilderFactory;
 
+  /**
+   * <br> Context는 AttributeAccessorSupport를 상속받아 활용..
+   * <br> TaskletStep.class innerClass ChunkTransactionCallback.class
+   * <br> doInTransaction() call "tasklet.execute()"
+   * @return
+   */
   @Bean
   public Step step1() {
     return stepBuilderFactory.get("step1")
         .tasklet(new Tasklet() {
           public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) {
+        	  chunkContext.getAttribute("aaa");
         	  System.out.println("aaaaaaaaaaaaaa");
         	  return null;
           }
