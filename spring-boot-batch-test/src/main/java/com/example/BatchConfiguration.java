@@ -1,8 +1,11 @@
 package com.example;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.apache.log4j.Logger;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.StepContribution;
@@ -21,11 +24,18 @@ import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemProcessor;
 import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.item.ItemWriter;
+import org.springframework.batch.item.file.LineMapper;
+import org.springframework.batch.item.file.mapping.PassThroughLineMapper;
+import org.springframework.batch.item.file.separator.RecordSeparatorPolicy;
+import org.springframework.batch.item.file.transform.PassThroughLineAggregator;
 import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
 import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
 //import org.springframework.core.task.AsyncTaskExecutor;
@@ -37,12 +47,16 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import com.example.model.Emp;
 import com.example.processor.EmpItemProcessor;
 import com.example.reader.EmpReader;
+import com.example.reader.FlatEmpFileReader;
+import com.example.reader.FlatFileReaderTest1;
 import com.example.writer.EmpWriter;
+import com.example.writer.FlatFileWriterTest1;
 
 @Configuration
 @EnableBatchProcessing
 @EnableAutoConfiguration
 public class BatchConfiguration {
+    Logger logger = Logger.getLogger("BatchConfiguration");
 
 	@Autowired
 	private JobBuilderFactory jobBuilderFactory;
@@ -237,13 +251,56 @@ public class BatchConfiguration {
 	public Step etlStep4() {
 
 		// stepBuilderFactory.get("aa").
-
+	    logger.info("etlStep4");
 		return stepBuilderFactory.get("step4").<String, Emp> chunk(20).reader(new EmpReader())
 				.processor(transformer())
 				.writer(writer())
 				.build();
 	}
-
+	
+	
+	
+	@Bean
+    public Step flatFileStep1() {
+	    Resource inputResource1 = getInputResource("testLine1\ntestLine2\ntestLine3\ntestLine4\ntestLine5\ntestLine6");
+	    
+	    FlatFileReaderTest1 reader = new FlatFileReaderTest1();
+	    reader.setResource(inputResource1);
+        reader.setLineMapper(new PassThroughLineMapper());
+	   
+        FlatFileWriterTest1 writer = new FlatFileWriterTest1();
+        byte[] bytes = new byte[1024];
+       
+        File outputFile;
+        try {
+            outputFile = File.createTempFile("flatfile-test-output-", ".tmp");
+            writer.setResource(new FileSystemResource(outputFile));
+        } catch (IOException e1) {
+            // TODO Auto-generated catch block
+            e1.printStackTrace();
+        }
+        
+        
+        writer.setLineSeparator("\n");
+        writer.setLineAggregator(new PassThroughLineAggregator<String>());
+        try {
+            writer.afterPropertiesSet();
+        } catch (Exception e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        writer.setSaveState(true);
+        writer.setEncoding("UTF-8");
+        
+        
+        logger.info("flatFileStep1");
+        return stepBuilderFactory.get("flatFileStep1").<String, String> chunk(20).reader( reader )
+//                .processor(transformer())
+//                .writer(writer())
+                .writer(writer)
+                .build();
+    }
+	
 	
 	public Step partitionStep1() {
 		Step sstep = stepBuilderFactory.get("partitionStep1").partitioner(etlStep4()) .build();
@@ -383,13 +440,30 @@ public class BatchConfiguration {
 	 * @return
 	 * @throws Exception
 	 */
-	@Bean
+//	@Bean
 	public Job rangeTestJob() throws Exception {
 //		return jobBuilderFactory.get("11").start(rangePartitionerStep()).on("*").to(npeStep()).next(npeStep()).build().build();
 		
 		return jobBuilderFactory.get("11").start(rangePartitionerStep()).next(npeStep()).build();
 		
 	}
+//	@Bean
+	public Job etlTestJob() throws Exception {
+//      return jobBuilderFactory.get("11").start(rangePartitionerStep()).on("*").to(npeStep()).next(npeStep()).build().build();
+        
+        return jobBuilderFactory.get("etl").start(etlStep4()).build();
+        
+    }
+	@Bean
+	public Job flatTestJob() throws Exception {
+//      return jobBuilderFactory.get("11").start(rangePartitionerStep()).on("*").to(npeStep()).next(npeStep()).build().build();
+        
+        return jobBuilderFactory.get("etl").start(flatFileStep1()).build();
+        
+    }
 	
+	private Resource getInputResource(String input) {
+        return new ByteArrayResource(input.getBytes());
+    }
 	
 }
