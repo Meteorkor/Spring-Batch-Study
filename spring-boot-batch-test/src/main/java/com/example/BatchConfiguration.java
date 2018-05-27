@@ -58,9 +58,27 @@ import com.example.writer.FlatFileWriterTest1;
 public class BatchConfiguration {
     Logger logger = Logger.getLogger("BatchConfiguration");
 
+		/**
+	 * <br> JobBuilderFactory(JobRepository)
+	 * <br> JobBuilder
+	 * <br> job{
+	 * <br>  Step, JobParameter Set(incrementer...)
+	 * <br> }
+	 * 
+	 */
 	@Autowired
 	private JobBuilderFactory jobBuilderFactory;
 
+/**
+   * <br> StepBuilderFactory(JobRepository, PlatformTransactionManager)
+   * <br> StepBuilder
+   * <br> Step{
+   * <br> 	Tasklet{
+   * <br>		return RepeatStatus(FINISHED, CONTINUABLE)
+   * <br>	}
+   * <br>
+   * <br> } 
+   */
 	@Autowired
 	private StepBuilderFactory stepBuilderFactory;
 
