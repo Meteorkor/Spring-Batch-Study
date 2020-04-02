@@ -12,9 +12,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.StepContribution;
+import org.springframework.batch.core.configuration.JobRegistry;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
+import org.springframework.batch.core.configuration.support.JobRegistryBeanPostProcessor;
 import org.springframework.batch.core.job.builder.FlowBuilder;
 import org.springframework.batch.core.job.flow.Flow;
 import org.springframework.batch.core.partition.support.Partitioner;
@@ -23,6 +25,10 @@ import org.springframework.batch.core.step.tasklet.Tasklet;
 import org.springframework.batch.item.ItemProcessor;
 import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.item.ItemWriter;
+import org.springframework.batch.item.adapter.ItemReaderAdapter;
+import org.springframework.batch.item.file.FlatFileItemReader;
+import org.springframework.batch.item.file.FlatFileItemWriter;
+import org.springframework.batch.item.file.builder.FlatFileItemWriterBuilder;
 import org.springframework.batch.item.file.mapping.PassThroughLineMapper;
 import org.springframework.batch.item.file.transform.PassThroughLineAggregator;
 import org.springframework.batch.repeat.RepeatStatus;
@@ -47,9 +53,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 @Configuration
 @EnableBatchProcessing
-@EnableAutoConfiguration
-public class BatchConfiguration {
-    Logger logger = LoggerFactory.getLogger("BatchConfiguration");
+//@EnableAutoConfiguration
+public class CommonBatchConfiguration {
+    private Logger logger = LoggerFactory.getLogger("BatchConfiguration");
 
 		/**
 	 * <br> JobBuilderFactory(JobRepository)
@@ -74,6 +80,18 @@ public class BatchConfiguration {
    */
 	@Autowired
 	private StepBuilderFactory stepBuilderFactory;
+
+	/**
+	 * 테스트
+	 * @param jobRegistry
+	 * @return
+	 */
+	@Bean
+	public JobRegistryBeanPostProcessor jobRegistryBeanPostProcessor(JobRegistry jobRegistry) {
+		JobRegistryBeanPostProcessor jobRegistryBeanPostProcessor = new JobRegistryBeanPostProcessor();
+		jobRegistryBeanPostProcessor.setJobRegistry(jobRegistry);
+		return jobRegistryBeanPostProcessor;
+	}
 
 	@Bean
 	public ItemReader<String> reader() {
@@ -224,30 +242,27 @@ public class BatchConfiguration {
 //	@Bean
     public Step flatFileStep1() {
 	    Resource inputResource1 = getInputResource("testLine1\ntestLine2\ntestLine3\ntestLine4\ntestLine5\ntestLine6");
-	    
-	    FlatFileReaderTest1 reader = new FlatFileReaderTest1();
+
+	    FlatFileItemReader reader = new FlatFileItemReader();
 	    reader.setResource(inputResource1);
         reader.setLineMapper(new PassThroughLineMapper());
-	   
-        FlatFileWriterTest1 writer = new FlatFileWriterTest1();
+
+//        FlatFileWriterTest1 writer = new FlatFileWriterTest1();
         byte[] bytes = new byte[1024];
        
         File outputFile;
         	String path = "D:\\tmp\\";
 //            outputFile = File.createTempFile("flatfile-test-output-", ".tmp");
 			outputFile = new File(path + "test.data");
-            writer.setResource(new FileSystemResource(outputFile));
 
-        
-        writer.setLineSeparator("\n");
-        writer.setLineAggregator(new PassThroughLineAggregator<String>());
-        try {
-            writer.afterPropertiesSet();
-        } catch (Exception e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-        writer.setSaveState(true);
+
+		FlatFileItemWriterBuilder flatFileItemWriterBuilder = new FlatFileItemWriterBuilder();
+		flatFileItemWriterBuilder.
+
+
+		FlatFileItemWriter writer = new FlatFileItemWriter();
+		writer.setResource(new FileSystemResource(outputFile));
+		writer.setLineSeparator("\n");
         writer.setEncoding("UTF-8");
         
         
@@ -256,7 +271,7 @@ public class BatchConfiguration {
 				.<String, String> chunk(20).reader( reader )
 //                .processor(transformer())
 //                .writer(writer())
-                .writer(writer)
+				.writer(writer)
                 .build();
     }
 	

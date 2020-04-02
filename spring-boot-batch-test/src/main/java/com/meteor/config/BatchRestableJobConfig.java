@@ -7,29 +7,32 @@ import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
+import org.springframework.batch.core.launch.support.RunIdIncrementer;
+import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.repeat.RepeatStatus;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
 @RequiredArgsConstructor
-public class JobFailTestConfig {
+public class BatchRestableJobConfig {
     private final JobBuilderFactory jobBuilderFactory;
     private final StepBuilderFactory stepBuilderFactory;
 
 
     @Bean
-    public Job failTestJob(){
+    public Job restableJob(){
         return
-        jobBuilderFactory.get("failTestJob").start(firstStep()).next(secondFailStep()).build();
+                jobBuilderFactory.get("restableJob")
+                        .start(firstStep()).next(secondFailStep())
+                        .incrementer(new RunIdIncrementer())
+                        .build();
     }
 
     public Step firstStep(){
         return
                 stepBuilderFactory.get("firstStep").tasklet((contri,con)->{
                     Logger logger = LoggerFactory.getLogger(this.getClass());
-
                     logger.info("con.getStepContext() : {}",con.getStepContext());
                     logger.info("getJobExecution().getExecutionContext() : {}", con.getStepContext().getStepExecution().getJobExecution().getExecutionContext());
                     logger.info("getStepExecution().getExecutionContext() : {}", con.getStepContext().getStepExecution().getExecutionContext());
@@ -46,9 +49,7 @@ public class JobFailTestConfig {
                     }
 
                     return RepeatStatus.FINISHED;
-                })
-                        .allowStartIfComplete(true)
-                        .build();
+                }).build();
     }
     public Step secondFailStep(){
         return
@@ -74,8 +75,6 @@ public class JobFailTestConfig {
                     }
 
 
-                    if(true)
-                        throw new NullPointerException("a");
                     return RepeatStatus.FINISHED;
                 }).build();
 

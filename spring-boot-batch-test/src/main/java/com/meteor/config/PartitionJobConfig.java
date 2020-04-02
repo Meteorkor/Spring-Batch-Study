@@ -10,6 +10,7 @@ import org.springframework.batch.core.configuration.annotation.StepBuilderFactor
 import org.springframework.batch.core.partition.support.Partitioner;
 import org.springframework.batch.core.scope.context.ChunkContext;
 import org.springframework.batch.core.step.tasklet.Tasklet;
+import org.springframework.batch.jsr.item.ItemReaderAdapter;
 import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -64,6 +65,8 @@ public class PartitionJobConfig {
 
         System.out.println("System.identityHashCode( Thread.currentThread() ) : "
                 + System.identityHashCode(Thread.currentThread()));
+
+
 
         // BatchRuntime.getJobOperator().getParameters(1);
         return stepBuilderFactory.get("npeStep").tasklet(new Tasklet() {
