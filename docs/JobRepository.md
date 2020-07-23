@@ -1,4 +1,4 @@
-#JobRepository
+# JobRepository
 * Job의 메타 정보를 조회하거나 상태를 Storage에 저장하는데 사용되는 모듈
 * 일반적으로 SimpleJobRepository
 * 변수는 4가지, JobInstanceDao, JobExecutionDao, StepExecutionDao, ExecutionContextDao
