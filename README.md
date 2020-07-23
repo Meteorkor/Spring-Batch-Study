@@ -26,5 +26,6 @@
   * T에서 ThreadPool을 활용하여 Future를 Writer에 반환(T 작업을 병렬처리)
   
 
-# 선후처리 체크
+# 정리
+  * [JobLauncher](docs/JobLauncher.md)
 
