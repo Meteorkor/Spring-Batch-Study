@@ -28,4 +28,5 @@
 
 # 정리
   * [JobLauncher](docs/JobLauncher.md)
+  * [JobRepository](docs/JobRepository.md)
 
