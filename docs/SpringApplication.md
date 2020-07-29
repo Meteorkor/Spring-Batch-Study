@@ -25,7 +25,22 @@
      - refresh(context)
        - 결국 context.refresh()
        - 대부분은 오버라이드 없이 org.springframework.context.support.AbstractApplicationContext.refresh() 처리
-         - 추가로 상세로 봐야할듯!!
+         - prepareRefresh
+         - obtainFreshBeanFactory
+         - prepareBeanFactory
+         - postProcessBeanFactory
+         - invokeBeanFactoryPostProcessors
+         - registerBeanPostProcessors
+         - initMessageSource
+         - initApplicationEventMulticaster
+         - onRefresh
+         - registerListeners
+         - finishBeanFactoryInitialization
+         - finishRefresh
+         - resetCommonCaches
+           - (ReflectionUtils, AnnotationUtils, ResolvableType).clearCache
+         
+         
      - context.registerShutdownHook();
        - JVM 내려갈때 불리도록 shutdown hook 등록
          - registerShutdownHook의 구현체는 결국 org.springframework.context.support.AbstractApplicationContext에 존재
@@ -37,8 +52,9 @@
              - closeBeanFactory
              - onclose()
    - afterRefresh
-     - 
-
+     - 딱히 수행하는 내용 없음
+   - callRunners
+     - ApplicationRunner 와 CommandLineRunner 수행
 
 
 
