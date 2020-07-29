@@ -24,3 +24,8 @@ Spring MVC, Spring Web에서
         - 그후 invokeHandlerMethod를 호출하여 해당 Controller 호출
       - 처리 완료 이후 processDispatchResult()
         - 에러 발생했을 경우, 내부에 getExceptionHandlerMethod를 구해서 ControllerAdvice 호출
+      - 마지막 handleReturnValue
+        - 내부에서 결과 값을 위한 핸들러를 다시 선정
+        - slelectHandler
+          - ![image](https://user-images.githubusercontent.com/5335333/88782594-bba46900-d1c8-11ea-9e75-6414328ea08a.png)
+          - RestController의 경우 RequestResponseBodyMethodProcessor 로 선정
