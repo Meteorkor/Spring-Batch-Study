@@ -17,3 +17,10 @@ Spring MVC, Spring Web에서
         - 여러가지 Mapping을 하나씩 돌려보며 대응되는 Handler를 찾는다.
           - 일반적으로 Controller에 Mapping을 설정한경우 RequestMappingHandlerMapping에서 핸들러를 찾게된다.
       - 전반적으로 대부분 처리는 Request에 attribute에 값들을 세팅하며 체크하며 진행
+      - getHandlerAdapter()
+        - ![image](https://user-images.githubusercontent.com/5335333/88781318-37051b00-d1c7-11ea-8e85-cff401e3d208.png)
+        - supports()를 통해 지원한는 Adapter인지 체크해서 adapter를 선정(보통은 RequestMappingHandlerAdapter)
+        - 선정된 adapter를 통해 핸들러에 param 매핑 로직 처리
+        - 그후 invokeHandlerMethod를 호출하여 해당 Controller 호출
+      - 처리 완료 이후 processDispatchResult()
+        - 에러 발생했을 경우, 내부에 getExceptionHandlerMethod를 구해서 ControllerAdvice 호출
