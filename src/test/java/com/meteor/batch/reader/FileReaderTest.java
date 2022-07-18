@@ -1,6 +1,7 @@
 package com.meteor.batch.reader;
 
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -78,9 +79,13 @@ public class FileReaderTest {
         String text = "kim,data\n" +
                       "lee,data2\n" +
                       "park,data3";
+        AtomicInteger skipCount = new AtomicInteger();
 
         final FlatFileItemReader<FileReaderItem> reader = new FlatFileItemReaderBuilder<FileReaderItem>()
                 .saveState(false)
+                .skippedLinesCallback(line -> {
+                    skipCount.incrementAndGet();
+                })
                 .lineMapper((line, lineNumber) -> {
                     final String[] splitStr = line.split(",");
                     return FileReaderItem.builder()
@@ -117,42 +122,114 @@ public class FileReaderTest {
             final FileReaderItem read = reader.read();
             Assertions.assertNull(read);
         }
+        Assertions.assertEquals(0, skipCount.get());
     }
 
-//    @Test
-//    void flatFileItemReaderTest() throws Exception {
-//        String text = "kim,data";
-//        //saveState
-////        Indicates whether or not the reader’s state should be saved in the ExecutionContext provided by ItemStream#update(ExecutionContext). The default is true.
-//        //재처리할때 활용
-//
-//        final FlatFileItemReader<FileReaderItem> reader = new FlatFileItemReaderBuilder<FileReaderItem>()
-//                .saveState(false)
-//                .lineMapper((line, lineNumber) -> {
-//                    final String[] splitStr = line.split(",");
-//                    return FileReaderItem.builder()
-//                                         .name(splitStr[0])
-//                                         .data(splitStr[1])
-//                                         .build();
-//                })
-//                .build();
-//
-//        final ByteArrayResource byteArrayResource = new ByteArrayResource(
-//                text.getBytes(StandardCharsets.UTF_8));
-//
-//        reader.setResource(byteArrayResource);
-//        ExecutionContext executionContext = new ExecutionContext();
-//        reader.open(executionContext);
-//
-//        final FileReaderItem read = reader.read();
-//        Assertions.assertEquals("kim", read.getName());
-//        Assertions.assertEquals("data", read.getData());
-//    }
+    @Test
+    void flatFileItemReader3LineSkipTest() throws Exception {
+        String text = "kim,data\n" +
+                      "lee,data2\n" +
+                      "park,data3";
+        AtomicInteger skipCount = new AtomicInteger();
 
-//    @Test
-//    void multiResourceItemReaderBuilderTest() {
-//        MultiResourceItemReaderBuilder
-//                FlatFileItemReader
-//        FlatFileItemReaderBuilder
-//    }
+        final FlatFileItemReader<FileReaderItem> reader = new FlatFileItemReaderBuilder<FileReaderItem>()
+                .saveState(false)
+                .linesToSkip(2)
+                .skippedLinesCallback(line -> {
+                    skipCount.incrementAndGet();
+                })
+                .lineMapper((line, lineNumber) -> {
+                    final String[] splitStr = line.split(",");
+                    return FileReaderItem.builder()
+                                         .name(splitStr[0])
+                                         .data(splitStr[1])
+                                         .build();
+                })
+                .build();
+
+        final ByteArrayResource byteArrayResource = new ByteArrayResource(
+                text.getBytes(StandardCharsets.UTF_8));
+
+        reader.setResource(byteArrayResource);
+        ExecutionContext executionContext = new ExecutionContext();
+        reader.open(executionContext);
+
+//        {
+//            final FileReaderItem read = reader.read();
+//            Assertions.assertEquals("kim", read.getName());
+//            Assertions.assertEquals("data", read.getData());
+//        }
+//
+//        {
+//            final FileReaderItem read = reader.read();
+//            Assertions.assertEquals("lee", read.getName());
+//            Assertions.assertEquals("data2", read.getData());
+//        }
+        {
+            final FileReaderItem read = reader.read();
+            Assertions.assertEquals("park", read.getName());
+            Assertions.assertEquals("data3", read.getData());
+        }
+        {
+            final FileReaderItem read = reader.read();
+            Assertions.assertNull(read);
+        }
+
+        Assertions.assertEquals(2, skipCount.get());
+    }
+
+    @Test
+    void flatFileItemReader3maxItemCountTest() throws Exception {
+        String text = "kim,data\n" +
+                      "lee,data2\n" +
+                      "park,data3";
+        AtomicInteger skipCount = new AtomicInteger();
+
+        final FlatFileItemReader<FileReaderItem> reader = new FlatFileItemReaderBuilder<FileReaderItem>()
+                .saveState(false)
+                .maxItemCount(2)
+                .skippedLinesCallback(line -> {
+                    skipCount.incrementAndGet();
+                })
+                .lineMapper((line, lineNumber) -> {
+                    final String[] splitStr = line.split(",");
+                    return FileReaderItem.builder()
+                                         .name(splitStr[0])
+                                         .data(splitStr[1])
+                                         .build();
+                })
+                .build();
+
+        final ByteArrayResource byteArrayResource = new ByteArrayResource(
+                text.getBytes(StandardCharsets.UTF_8));
+
+        reader.setResource(byteArrayResource);
+        ExecutionContext executionContext = new ExecutionContext();
+        reader.open(executionContext);
+
+        {
+            final FileReaderItem read = reader.read();
+            Assertions.assertEquals("kim", read.getName());
+            Assertions.assertEquals("data", read.getData());
+        }
+
+        {
+            final FileReaderItem read = reader.read();
+            Assertions.assertEquals("lee", read.getName());
+            Assertions.assertEquals("data2", read.getData());
+        }
+        {
+            final FileReaderItem read = reader.read();
+            Assertions.assertNull(read);//.maxItemCount(2)
+        }
+        {
+            final FileReaderItem read = reader.read();
+            Assertions.assertNull(read);
+        }
+
+        Assertions.assertEquals(0, skipCount.get());
+    }
+
+    //fixed
+    //del
 }
