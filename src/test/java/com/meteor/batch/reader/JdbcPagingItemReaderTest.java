@@ -3,6 +3,7 @@ package com.meteor.batch.reader;
 import javax.sql.DataSource;
 
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.database.JdbcPagingItemReader;
@@ -11,7 +12,7 @@ import org.springframework.batch.item.database.builder.JdbcPagingItemReaderBuild
 import org.springframework.batch.item.database.support.SqlPagingQueryProviderFactoryBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.jdbc.BadSqlGrammarException;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 import com.meteor.batch.reader.vo.JdbcReaderItem;
 
@@ -19,51 +20,105 @@ import com.meteor.batch.reader.vo.JdbcReaderItem;
 public class JdbcPagingItemReaderTest {
 
     @Autowired
+    private JdbcTemplate jdbcTemplate;
+
+    @Autowired
     private DataSource dataSource;
 
-    @Test
-    void afterPropertiesSetNotCallTest() throws Exception {
-        final JdbcPagingItemReader<JdbcReaderItem> jdbcPagingItemReader =
-                new JdbcPagingItemReaderBuilder<JdbcReaderItem>().name("JdbcPagingItemReader")
-                                                                 .queryProvider(queryProvider())
-                                                                 .dataSource(dataSource)
-                                                                 .rowMapper(
-                                                                         (rs, idx) -> JdbcReaderItem.builder()
-                                                                                                    .build()
-                                                                 )
-                                                                 .build();
-//        jdbcPagingItemReader.afterPropertiesSet();
+    private static boolean beforeAllInit = false;
 
-        ExecutionContext executionContext = new ExecutionContext();
-        jdbcPagingItemReader.open(executionContext);
-
-        //java.lang.NullPointerException: Cannot invoke "org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate.getJdbcOperations()" because "this.namedParameterJdbcTemplate" is null
-        Assertions.assertThrows(NullPointerException.class, () -> {
-            jdbcPagingItemReader.read();
-        });
+    @BeforeEach
+    void setUp() {
+        if (!beforeAllInit) {
+            jdbcTemplate.execute("create table IF NOT EXISTS `Emp`\n"
+                                 + "(\n"
+                                 + "  empno bigint NOT NULL AUTO_INCREMENT PRIMARY KEY,\n"
+                                 + "  ename VARCHAR(40) NOT NULL"
+                                 + "  );");
+            beforeAllInit = true;
+        } else {
+            jdbcTemplate.update("delete from Emp");
+        }
     }
 
     @Test
-    void notExistTableTest() throws Exception {
-        System.out.println("ds : " + dataSource);
+    void noReadData() throws Exception {
         final JdbcPagingItemReader<JdbcReaderItem> jdbcPagingItemReader =
-                new JdbcPagingItemReaderBuilder<JdbcReaderItem>().name("JdbcPagingItemReader")
-                                                                 .queryProvider(queryProvider())
-                                                                 .dataSource(dataSource)
-                                                                 .rowMapper(
-                                                                         (rs, idx) -> JdbcReaderItem.builder()
-                                                                                                    .build()
-                                                                 )
-                                                                 .build();
+                new JdbcPagingItemReaderBuilder<JdbcReaderItem>()
+                        .name("JdbcPagingItemReader")
+                        .queryProvider(queryProvider())
+                        .dataSource(dataSource)
+                        .rowMapper(
+                                (rs, idx) -> JdbcReaderItem.builder()
+                                                           .name(rs.getString("ename"))
+                                                           .data(rs.getString("empno"))
+                                                           .build()
+                        )
+                        .build();
         jdbcPagingItemReader.afterPropertiesSet();
 
         ExecutionContext executionContext = new ExecutionContext();
         jdbcPagingItemReader.open(executionContext);
-        //org.springframework.jdbc.BadSqlGrammarException: StatementCallback; bad SQL grammar [SELECT TOP 10 empno, ename FROM Emp ORDER BY empno ASC]; nested exception is org.h2.jdbc.JdbcSQLSyntaxErrorException: Table "EMP" not found; SQL statement:
-        //SELECT TOP 10 empno, ename FROM Emp ORDER BY empno ASC [42102-200]
-        Assertions.assertThrows(BadSqlGrammarException.class, () -> {
-            jdbcPagingItemReader.read();
-        });
+        final JdbcReaderItem read = jdbcPagingItemReader.read();
+        Assertions.assertNull(read);
+    }
+
+    @Test
+    void readData() throws Exception {
+        jdbcTemplate.update("insert into Emp(ename) values('kim') ");
+        final JdbcPagingItemReader<JdbcReaderItem> jdbcPagingItemReader =
+                new JdbcPagingItemReaderBuilder<JdbcReaderItem>()
+                        .name("JdbcPagingItemReader")
+                        .queryProvider(queryProvider())
+                        .dataSource(dataSource)
+                        .rowMapper(
+                                (rs, idx) -> JdbcReaderItem.builder()
+                                                           .name(rs.getString("ename"))
+                                                           .data(rs.getString("empno"))
+                                                           .build()
+                        )
+                        .build();
+        jdbcPagingItemReader.afterPropertiesSet();
+
+        ExecutionContext executionContext = new ExecutionContext();
+        jdbcPagingItemReader.open(executionContext);
+        final JdbcReaderItem read = jdbcPagingItemReader.read();
+        Assertions.assertEquals("1", read.getData());
+        Assertions.assertEquals("kim", read.getName());
+    }
+
+    @Test
+    void maxItemCountTest() throws Exception {
+        final int pageSize = 100;
+        for (int i = 0; i < pageSize * 10; i++) {
+            jdbcTemplate.update(String.format("insert into Emp(ename) values('%s') ", "kim" + i));
+        }
+
+        final JdbcPagingItemReader<JdbcReaderItem> jdbcPagingItemReader =
+                new JdbcPagingItemReaderBuilder<JdbcReaderItem>()
+                        .name("JdbcPagingItemReader")
+                        .queryProvider(queryProvider())
+                        .maxItemCount(pageSize)
+                        .dataSource(dataSource)
+                        .rowMapper(
+                                (rs, idx) -> JdbcReaderItem.builder()
+                                                           .name(rs.getString("ename"))
+                                                           .data(rs.getString("empno"))
+                                                           .build()
+                        )
+                        .build();
+        jdbcPagingItemReader.afterPropertiesSet();
+
+        ExecutionContext executionContext = new ExecutionContext();
+        jdbcPagingItemReader.open(executionContext);
+
+        for (int i = 0; i < pageSize; i++) {
+            final JdbcReaderItem read = jdbcPagingItemReader.read();
+            Assertions.assertNotNull(read);
+        }
+
+        final JdbcReaderItem read = jdbcPagingItemReader.read();
+        Assertions.assertNull(read);
     }
 
     public PagingQueryProvider queryProvider() throws Exception {
