@@ -5,6 +5,7 @@ import javax.sql.DataSource;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.database.JdbcPagingItemReader;
 import org.springframework.batch.item.database.PagingQueryProvider;
@@ -13,6 +14,8 @@ import org.springframework.batch.item.database.support.SqlPagingQueryProviderFac
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import com.meteor.batch.reader.vo.JdbcReaderItem;
 
@@ -119,6 +122,52 @@ public class JdbcPagingItemReaderTest {
 
         final JdbcReaderItem read = jdbcPagingItemReader.read();
         Assertions.assertNull(read);
+    }
+
+    @Test
+    void pageQueryTest() throws Exception {
+        final int pageSize = 100;
+        for (int i = 0; i < pageSize * 10; i++) {
+            jdbcTemplate.update(String.format("insert into Emp(ename) values('%s') ", "kim" + i));
+        }
+
+        final JdbcPagingItemReader<JdbcReaderItem> jdbcPagingItemReader =
+                new JdbcPagingItemReaderBuilder<JdbcReaderItem>()
+                        .name("JdbcPagingItemReader")
+                        .pageSize(pageSize)
+                        .queryProvider(queryProvider())
+                        .dataSource(dataSource)
+                        .rowMapper(
+                                (rs, idx) -> JdbcReaderItem.builder()
+                                                           .name(rs.getString("ename"))
+                                                           .data(rs.getString("empno"))
+                                                           .build()
+                        )
+                        .build();
+        jdbcPagingItemReader.afterPropertiesSet();
+
+        final Object namedParameterJdbcTemplate = ReflectionTestUtils.getField(jdbcPagingItemReader,
+                                                                               "namedParameterJdbcTemplate");
+
+        final Object namedParameterJdbcTemplateSpy = Mockito.spy(namedParameterJdbcTemplate);
+        ReflectionTestUtils.setField(jdbcPagingItemReader,
+                                     "namedParameterJdbcTemplate", namedParameterJdbcTemplateSpy);
+
+        NamedParameterJdbcTemplate namedParameterJdbcTemplate1 =
+                (NamedParameterJdbcTemplate) namedParameterJdbcTemplateSpy;
+
+        ExecutionContext executionContext = new ExecutionContext();
+        jdbcPagingItemReader.open(executionContext);
+
+        for (int i = 0; i < pageSize; i++) {
+            final JdbcReaderItem read = jdbcPagingItemReader.read();
+            Assertions.assertNotNull(read);
+        }
+
+        Mockito.verify(namedParameterJdbcTemplate1, Mockito.times(1)).getJdbcOperations();
+        final JdbcReaderItem read = jdbcPagingItemReader.read();
+        Assertions.assertNotNull(read);
+        Mockito.verify(namedParameterJdbcTemplate1, Mockito.times(2)).getJdbcOperations();
     }
 
     public PagingQueryProvider queryProvider() throws Exception {
