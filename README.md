@@ -24,7 +24,15 @@
     * Partitioner의 경우 처음부터 데이터를 나눠야 함
     * 하나의 데이터로 CPU 작업이 큰경우, 그리고 데이터를 나눌수 있는 경우 내부에서 Stream.parallel를 활용 좋을듯함
   * T에서 ThreadPool을 활용하여 Future를 Writer에 반환(T 작업을 병렬처리)
-  
+
+# 테스트 Reader
+* FileReader
+* JdbcPagingItemReader
+
+# 테스트 Writer
+* FileWriter
+* JdbcItemWriter
+
 
 # 정리
   * [JobLauncher](docs/JobLauncher.md)
