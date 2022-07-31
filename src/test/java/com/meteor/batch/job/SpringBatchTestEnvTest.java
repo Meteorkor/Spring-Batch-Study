@@ -6,6 +6,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.batch.core.BatchStatus;
 import org.springframework.batch.core.ExitStatus;
 import org.springframework.batch.core.JobExecution;
+import org.springframework.batch.core.JobParameters;
+import org.springframework.batch.core.JobParametersBuilder;
 import org.springframework.batch.test.JobLauncherTestUtils;
 import org.springframework.batch.test.JobRepositoryTestUtils;
 import org.springframework.batch.test.context.SpringBatchTest;
@@ -47,6 +49,18 @@ public class SpringBatchTestEnvTest {
         final JobExecution jobExecution = jobLauncherTestUtils.launchJob();
         Assertions.assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
         Assertions.assertEquals(ExitStatus.COMPLETED, jobExecution.getExitStatus());
+    }
+
+    @Test
+    void jobLauncherTestUtilsLaunchJobParametersTest() throws Exception {
+        final String testVal = "testVal";
+        final JobParameters jobParameters = new JobParametersBuilder().addString("value", testVal)
+                                                                      .toJobParameters();
+        final JobExecution jobExecution = jobLauncherTestUtils.launchJob(jobParameters);
+        Assertions.assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
+        Assertions.assertEquals(ExitStatus.COMPLETED, jobExecution.getExitStatus());
+
+        Assertions.assertEquals(jobExecution.getExecutionContext().getString("value"), testVal);
     }
 
 }

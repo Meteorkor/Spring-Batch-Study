@@ -17,8 +17,8 @@ public class SpringBatchTestEnvConfig {
 
     @Bean
     @Primary
-    public Job testJob() {
-        return jobMap.get("AlphabetChunkCountingJOB");
+    public Job primaryTestJob() {
+        return jobMap.get("testJob");
     }
 
 }
