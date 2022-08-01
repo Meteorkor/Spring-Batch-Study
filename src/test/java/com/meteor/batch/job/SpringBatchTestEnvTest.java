@@ -63,4 +63,26 @@ public class SpringBatchTestEnvTest {
         Assertions.assertEquals(jobExecution.getExecutionContext().getString("value"), testVal);
     }
 
+    @Test
+    void jobLauncherTestUtilsLaunchStepTest() throws Exception {
+        final String testVal = "testVal";
+
+        final JobExecution jobExecution = jobLauncherTestUtils.launchStep("testStep1");
+        Assertions.assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
+        Assertions.assertEquals(ExitStatus.COMPLETED, jobExecution.getExitStatus());
+    }
+
+    @Test
+    void jobLauncherTestUtilsLaunchStepJobParameterTest() throws Exception {
+        final String testVal = "testVal";
+        final JobParameters jobParameters = new JobParametersBuilder().addString("value", testVal)
+                                                                      .toJobParameters();
+
+        final JobExecution jobExecution = jobLauncherTestUtils.launchStep("testStep1", jobParameters);
+        Assertions.assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
+        Assertions.assertEquals(ExitStatus.COMPLETED, jobExecution.getExitStatus());
+
+        Assertions.assertEquals(jobExecution.getExecutionContext().getString("value"), testVal);
+    }
+
 }
