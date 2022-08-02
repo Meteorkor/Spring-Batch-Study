@@ -1,5 +1,7 @@
 package com.meteor.batch.job;
 
+import java.util.UUID;
+
 import org.junit.Before;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -55,34 +57,60 @@ public class SpringBatchTestEnvTest {
     void jobLauncherTestUtilsLaunchJobParametersTest() throws Exception {
         final String testVal = "testVal";
         final JobParameters jobParameters = new JobParametersBuilder().addString("value", testVal)
+                                                                      .addString("RAN",
+                                                                                 UUID.randomUUID().toString())
                                                                       .toJobParameters();
         final JobExecution jobExecution = jobLauncherTestUtils.launchJob(jobParameters);
         Assertions.assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
         Assertions.assertEquals(ExitStatus.COMPLETED, jobExecution.getExitStatus());
 
-        Assertions.assertEquals(jobExecution.getExecutionContext().getString("value"), testVal);
+        Assertions.assertEquals(jobExecution.getExecutionContext().getString(TestJobConfig.STEP1_CHECK_KEY),
+                                testVal);
+        Assertions.assertEquals(jobExecution.getExecutionContext().getString(TestJobConfig.STEP2_CHECK_KEY),
+                                testVal);
     }
 
     @Test
     void jobLauncherTestUtilsLaunchStepTest() throws Exception {
         final String testVal = "testVal";
 
-        final JobExecution jobExecution = jobLauncherTestUtils.launchStep("testStep1");
+        final JobExecution jobExecution = jobLauncherTestUtils.launchStep(TestJobConfig.TEST_STEP1);
         Assertions.assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
         Assertions.assertEquals(ExitStatus.COMPLETED, jobExecution.getExitStatus());
     }
 
     @Test
-    void jobLauncherTestUtilsLaunchStepJobParameterTest() throws Exception {
+    void jobLauncherTestUtilsLaunchStep1JobParameterTest() throws Exception {
         final String testVal = "testVal";
         final JobParameters jobParameters = new JobParametersBuilder().addString("value", testVal)
+                                                                      .addString("RAN",
+                                                                                 UUID.randomUUID().toString())
                                                                       .toJobParameters();
 
-        final JobExecution jobExecution = jobLauncherTestUtils.launchStep("testStep1", jobParameters);
+        final JobExecution jobExecution = jobLauncherTestUtils.launchStep(TestJobConfig.TEST_STEP1,
+                                                                          jobParameters);
         Assertions.assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
         Assertions.assertEquals(ExitStatus.COMPLETED, jobExecution.getExitStatus());
 
-        Assertions.assertEquals(jobExecution.getExecutionContext().getString("value"), testVal);
+        Assertions.assertEquals(jobExecution.getExecutionContext().getString(TestJobConfig.STEP1_CHECK_KEY),
+                                testVal);
+    }
+
+    @Test
+    void jobLauncherTestUtilsLaunchStep2JobParameterTest() throws Exception {
+        final String testVal = "testVal";
+        final JobParameters jobParameters = new JobParametersBuilder().addString("value", testVal)
+                                                                      .addString("RAN",
+                                                                                 UUID.randomUUID().toString())
+                                                                      .toJobParameters();
+
+        final JobExecution jobExecution = jobLauncherTestUtils.launchStep(TestJobConfig.TEST_STEP2,
+                                                                          jobParameters);
+        Assertions.assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
+        Assertions.assertEquals(ExitStatus.COMPLETED, jobExecution.getExitStatus());
+
+        Assertions.assertEquals(jobExecution.getExecutionContext().getString(TestJobConfig.STEP2_CHECK_KEY),
+                                testVal);
     }
 
 }
