@@ -15,10 +15,11 @@ import org.springframework.batch.test.JobRepositoryTestUtils;
 import org.springframework.batch.test.context.SpringBatchTest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 
-//@ExtendWith(SpringExtension.class)
 @SpringBatchTest
 @SpringBootTest
+@Import(SpringBatchTestEnvConfig.class)
 public class SpringBatchTestEnvTest {
 
     @Autowired
@@ -94,6 +95,10 @@ public class SpringBatchTestEnvTest {
 
         Assertions.assertEquals(jobExecution.getExecutionContext().getString(TestJobConfig.STEP1_CHECK_KEY),
                                 testVal);
+
+        Assertions.assertNull(
+                jobExecution.getExecutionContext().getString(TestJobConfig.STEP2_CHECK_KEY, null));
+
     }
 
     @Test
@@ -111,6 +116,8 @@ public class SpringBatchTestEnvTest {
 
         Assertions.assertEquals(jobExecution.getExecutionContext().getString(TestJobConfig.STEP2_CHECK_KEY),
                                 testVal);
+        Assertions.assertNull(
+                jobExecution.getExecutionContext().getString(TestJobConfig.STEP1_CHECK_KEY, null));
     }
 
 }

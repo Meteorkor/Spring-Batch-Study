@@ -41,14 +41,10 @@ public class TestJobConfig {
         return stepBuilderFactory.get(TEST_STEP1).tasklet(
                 (StepContribution stepContribution, ChunkContext chunkContext) -> {
                     JobParameters jobParameters = stepContribution.getStepExecution().getJobParameters();
-                    log.info("jobParameters.toString() : "
-                             + jobParameters.toString());
+                    log.info("jobParameters.toString() : {}", jobParameters.toString());
 
                     chunkContext.getStepContext().getStepExecution().getJobExecution()
                                 .getExecutionContext().put(STEP1_CHECK_KEY, jobParameters.getString("value"));
-//                    chunkContext.getStepContext()
-//                                .getJobExecutionContext().put("value", jobParameters.getString("value"));
-
                     return RepeatStatus.FINISHED;
                 }).build();
     }
@@ -58,8 +54,7 @@ public class TestJobConfig {
         return stepBuilderFactory.get(TEST_STEP2).tasklet(
                 (StepContribution stepContribution, ChunkContext chunkContext) -> {
                     JobParameters jobParameters = stepContribution.getStepExecution().getJobParameters();
-                    log.info("jobParameters.toString() : "
-                             + jobParameters.toString());
+                    log.info("jobParameters.toString() : {}", jobParameters.toString());
 
                     chunkContext.getStepContext().getStepExecution().getJobExecution()
                                 .getExecutionContext().put(STEP2_CHECK_KEY, jobParameters.getString("value"));
