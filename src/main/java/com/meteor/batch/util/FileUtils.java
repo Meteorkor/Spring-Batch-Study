@@ -34,6 +34,7 @@ public final class FileUtils {
     @Builder
     public static class FileWriteProcess {
         private final Path writePath;
+        //하나만 받는경우에 대해서도 Builder 에서 제공함
         @Singular
         private final List<OpenOption> options;
         private final String itemSeparator;
