@@ -22,9 +22,52 @@ class FileUtilsTest {
         Files.write(file.toPath(), of, StandardOpenOption.CREATE);
 
         final Iterator<String> iterator = of.iterator();
-        FileUtils.lineToProcess(file.toPath(), line -> {
-            Assertions.assertEquals(iterator.next(), line);
-        });
+
+        final FileUtils.FileReadProcess fileReadProcess = FileUtils.FileReadProcess.builder()
+                                                                                   .readPath(file.toPath())
+                                                                                   .lineProcess(
+                                                                                           line ->
+                                                                                                   Assertions.assertEquals(
+                                                                                                           iterator.next(),
+                                                                                                           line
+                                                                                                   )
+                                                                                   ).build();
+
+        fileReadProcess.lineToProcess();
+    }
+
+    @Test
+    void itemWriteProcess() throws IOException {
+        File file = File.createTempFile("pre", "suf");
+        file.deleteOnExit();
+
+        final List<String> of = Lists.list("a", "b", "c");
+        final Iterator<String> itemIter = of.iterator();
+
+        final FileUtils.FileWriteProcess fileWriteProcess = FileUtils.FileWriteProcess.builder()
+                                                                                      .writePath(file.toPath())
+                                                                                      .itemSupplier(
+                                                                                              () -> itemIter.hasNext() ?
+                                                                                                    itemIter.next() :
+                                                                                                    null
+                                                                                      )
+                                                                                      .itemSeparator(
+                                                                                              System.lineSeparator())
+                                                                                      .option(StandardOpenOption.CREATE)
+                                                                                      .build();
+
+        fileWriteProcess.itemWriteProcess();
+
+        final Iterator<String> iterator = of.iterator();
+        final FileUtils.FileReadProcess fileReadProcess = FileUtils.FileReadProcess.builder().readPath(
+                                                                           file.toPath())
+                                                                                   .lineProcess(line -> {
+                                                                                       Assertions.assertEquals(
+                                                                                               iterator.next(),
+                                                                                               line);
+                                                                                   }).build();
+
+        fileReadProcess.lineToProcess();
     }
 
 }
