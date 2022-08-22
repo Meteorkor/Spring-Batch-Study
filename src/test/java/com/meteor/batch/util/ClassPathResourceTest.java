@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.Reader;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -11,6 +12,7 @@ import org.apache.logging.log4j.util.Strings;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.util.FileCopyUtils;
 
 public class ClassPathResourceTest {
 
@@ -29,6 +31,22 @@ public class ClassPathResourceTest {
         } catch (IOException ioException) {
             ioException.printStackTrace();
         }
+    }
+
+    @Test
+    void classResourceToString() {
+        final ClassPathResource classPathResource = new ClassPathResource("emp1.json");
+        try (Reader reader = new InputStreamReader(classPathResource.getInputStream())) {
+            final String json = FileCopyUtils.copyToString(reader);
+            Assertions.assertEquals("{\n"
+                                    + "  \"empno\": 1,\n"
+                                    + "  \"ename\": \"kim\"\n"
+                                    + "}", json);
+            return;
+        } catch (IOException ioException) {
+            ioException.printStackTrace();
+        }
+        Assertions.fail();
     }
 
     @Test
