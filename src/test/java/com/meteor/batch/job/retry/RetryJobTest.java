@@ -1,7 +1,5 @@
 package com.meteor.batch.job.retry;
 
-import java.util.UUID;
-
 import org.junit.Before;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -16,8 +14,6 @@ import org.springframework.batch.test.context.SpringBatchTest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
-
-import com.meteor.batch.job.TestJobConfig;
 
 @SpringBatchTest
 @SpringBootTest
@@ -57,69 +53,26 @@ public class RetryJobTest {
     }
 
     @Test
-    void jobLauncherTestUtilsLaunchJobParametersTest() throws Exception {
-        final String testVal = "testVal";
-        final JobParameters jobParameters = new JobParametersBuilder().addString("value", testVal)
-                                                                      .addString("RAN",
-                                                                                 UUID.randomUUID().toString())
+    void jobLauncherTestUtilsLaunchJobParametersFailTest() throws Exception {
+        final JobParameters jobParameters = new JobParametersBuilder().addLong(RetryJobConfig.FAIL_CNT, 10L)
                                                                       .toJobParameters();
         final JobExecution jobExecution = jobLauncherTestUtils.launchJob(jobParameters);
-        Assertions.assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
-        Assertions.assertEquals(ExitStatus.COMPLETED, jobExecution.getExitStatus());
-
-        Assertions.assertEquals(jobExecution.getExecutionContext().getString(TestJobConfig.STEP1_CHECK_KEY),
-                                testVal);
-        Assertions.assertEquals(jobExecution.getExecutionContext().getString(TestJobConfig.STEP2_CHECK_KEY),
-                                testVal);
+        Assertions.assertEquals(BatchStatus.FAILED, jobExecution.getStatus());
+        Assertions.assertEquals(ExitStatus.FAILED.getExitCode(), jobExecution.getExitStatus().getExitCode());
     }
 
-//    @Test
-//    void jobLauncherTestUtilsLaunchStepTest() throws Exception {
-//        final String testVal = "testVal";
-//
-//        final JobExecution jobExecution = jobLauncherTestUtils.launchStep(TestJobConfig.TEST_STEP1);
-//        Assertions.assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
-//        Assertions.assertEquals(ExitStatus.COMPLETED, jobExecution.getExitStatus());
-//    }
+    @Test
+    void jobLauncherTestUtilsLaunchJobParametersFailAndRetryTest() throws Exception {
+        final JobParameters jobParameters = new JobParametersBuilder().addLong(RetryJobConfig.FAIL_CNT, 20L)
+                                                                      .toJobParameters();
+        final JobExecution jobExecution = jobLauncherTestUtils.launchJob(jobParameters);
+        Assertions.assertEquals(BatchStatus.FAILED, jobExecution.getStatus());
+        Assertions.assertEquals(ExitStatus.FAILED.getExitCode(), jobExecution.getExitStatus().getExitCode());
 
-//    @Test
-//    void jobLauncherTestUtilsLaunchStep1JobParameterTest() throws Exception {
-//        final String testVal = "testVal";
-//        final JobParameters jobParameters = new JobParametersBuilder().addString("value", testVal)
-//                                                                      .addString("RAN",
-//                                                                                 UUID.randomUUID().toString())
-//                                                                      .toJobParameters();
-//
-//        final JobExecution jobExecution = jobLauncherTestUtils.launchStep(TestJobConfig.TEST_STEP1,
-//                                                                          jobParameters);
-//        Assertions.assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
-//        Assertions.assertEquals(ExitStatus.COMPLETED, jobExecution.getExitStatus());
-//
-//        Assertions.assertEquals(jobExecution.getExecutionContext().getString(TestJobConfig.STEP1_CHECK_KEY),
-//                                testVal);
-//
-//        Assertions.assertNull(
-//                jobExecution.getExecutionContext().getString(TestJobConfig.STEP2_CHECK_KEY, null));
-//
-//    }
-
-//    @Test
-//    void jobLauncherTestUtilsLaunchStep2JobParameterTest() throws Exception {
-//        final String testVal = "testVal";
-//        final JobParameters jobParameters = new JobParametersBuilder().addString("value", testVal)
-//                                                                      .addString("RAN",
-//                                                                                 UUID.randomUUID().toString())
-//                                                                      .toJobParameters();
-//
-//        final JobExecution jobExecution = jobLauncherTestUtils.launchStep(TestJobConfig.TEST_STEP2,
-//                                                                          jobParameters);
-//        Assertions.assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
-//        Assertions.assertEquals(ExitStatus.COMPLETED, jobExecution.getExitStatus());
-//
-//        Assertions.assertEquals(jobExecution.getExecutionContext().getString(TestJobConfig.STEP2_CHECK_KEY),
-//                                testVal);
-//        Assertions.assertNull(
-//                jobExecution.getExecutionContext().getString(TestJobConfig.STEP1_CHECK_KEY, null));
-//    }
+        //org.springframework.batch.core.repository.JobRestartException: JobInstance already exists and is not restartable
+        //.preventRestart() 설정되어있을경우 위와같은 에러 발생
+        final JobExecution jobExecution2 = jobLauncherTestUtils.launchJob(jobParameters);
+        //TODO assert 추가 및 reader측에서 에러 내도록 변경, writer에서 context에 데이터 남기는것 assert 추가
+    }
 
 }
