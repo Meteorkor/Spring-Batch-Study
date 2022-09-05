@@ -5,9 +5,11 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemStreamException;
 import org.springframework.batch.item.ItemStreamReader;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import lombok.RequiredArgsConstructor;
@@ -16,19 +18,27 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 @Component
 @Slf4j
+@StepScope
 public class RetryReader implements ItemStreamReader<String> {
-    private static final String READ_CNT = "READ_CNT";
+
+    @Value("#{jobParameters['" + RetryJobConfig.END_EXCLUSIVE + "'] ?: " + 1000 + '}')
+    private Long endExclusive;
+
     private List<String> dataList;
     private long readCnt;
     private Iterator<String> iter;
 
+
     @Override
     public void open(ExecutionContext executionContext) throws ItemStreamException {
         //select data
-        //TODO 데이터 가변
-        dataList = IntStream.range(0, 100).mapToObj(String::valueOf).collect(Collectors.toList());
+        dataList = IntStream.range(0, endExclusive.intValue()).mapToObj(String::valueOf).collect(Collectors.toList());
 
-        final long updateCnt = executionContext.getLong(READ_CNT, 0L);
+        final long loadSum = executionContext.getLong(RetryJobConfig.SUM, 0L);
+        log.info("loadSum: {}", loadSum);
+
+        final long updateCnt = executionContext.getLong(RetryJobConfig.READ_CNT, 0L);
+        this.readCnt = updateCnt;
         log.info("updateCnt: {}", updateCnt);
 
         this.iter = dataList.stream().skip(updateCnt).collect(Collectors.toList()).iterator();
@@ -45,7 +55,7 @@ public class RetryReader implements ItemStreamReader<String> {
 
     @Override
     public void update(ExecutionContext executionContext) throws ItemStreamException {
-        executionContext.putLong(READ_CNT, readCnt);
+        executionContext.putLong(RetryJobConfig.READ_CNT, this.readCnt);
     }
 
     @Override

@@ -25,6 +25,7 @@ public class RetryJobConfig {
     private final JobBuilderFactory jobBuilderFactory;
     private final StepBuilderFactory stepBuilderFactory;
     private final RetryReader retryReader;
+    private final RetryWriter retryWriter;
     private final RetryJobParameter retryJobParameter;
 
     public static final String STEP1_CHECK_KEY = "step1_value";
@@ -32,7 +33,10 @@ public class RetryJobConfig {
     public static final String TEST_STEP1 = "retryStep1";
     public static final String TEST_STEP2 = "retryStep2";
 
+    public static final String END_EXCLUSIVE = "END_EXCLUSIVE";
     public static final String FAIL_CNT = "FAIL_CNT";
+    public static final String SUM = "SUM";
+    public static final String READ_CNT = "READ_CNT";
 
     @Bean
     public Job retryJob() {
@@ -58,21 +62,11 @@ public class RetryJobConfig {
 
     @Bean
     public Step retryStep1() {
-        AtomicInteger atomicInteger = new AtomicInteger();
         return stepBuilderFactory.get(TEST_STEP1)
-                                 .chunk(10)
+                                 .<String, String>chunk(10)
                                  .reader(retryReader)
-                                 .writer(list -> {
-
-                                     atomicInteger.addAndGet(list.size());
-
-                                     if (retryJobParameter.getFailCnt() != -1
-                                         && atomicInteger.get() >= retryJobParameter.getFailCnt()) {
-                                         throw new IndexOutOfBoundsException("exceedCnt");
-                                     }
-
-                                     System.out.println("list : " + list);
-                                 }).build();
+                                 .writer(retryWriter)
+                                 .build();
     }
 
     //TODO step1 완료 후 재수행시 step2 부터 시작되는 시나리오도 추가
@@ -98,6 +92,9 @@ public class RetryJobConfig {
 
         @Value("#{jobParameters['" + FAIL_CNT + "'] ?: " + -1 + '}')
         private Long failCnt;
+
+        @Value("#{jobParameters['" + END_EXCLUSIVE + "'] ?: " + 1000 + '}')
+        private Long endExclusive;
 
     }
 
