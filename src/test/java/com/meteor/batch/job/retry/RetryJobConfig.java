@@ -47,19 +47,6 @@ public class RetryJobConfig {
                                 .build();
     }
 
-//    @Bean
-//    public Step retryStep1() {
-//        return stepBuilderFactory.get(TEST_STEP1).tasklet(
-//                (StepContribution stepContribution, ChunkContext chunkContext) -> {
-//                    JobParameters jobParameters = stepContribution.getStepExecution().getJobParameters();
-//                    log.info("jobParameters.toString() : {}", jobParameters);
-//
-//                    chunkContext.getStepContext().getStepExecution().getJobExecution()
-//                                .getExecutionContext().put(STEP1_CHECK_KEY, jobParameters.getString("value"));
-//                    return RepeatStatus.FINISHED;
-//                }).build();
-//    }
-
     @Bean
     public Step retryStep1() {
         return stepBuilderFactory.get(TEST_STEP1)
