@@ -1,12 +1,11 @@
 package com.meteor.batch.job.retry;
 
-import java.util.concurrent.atomic.AtomicInteger;
-
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.JobScope;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
+import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -31,7 +30,7 @@ public class RetryJobConfig {
     public static final String STEP1_CHECK_KEY = "step1_value";
     public static final String STEP2_CHECK_KEY = "step2_value";
     public static final String TEST_STEP1 = "retryStep1";
-    public static final String TEST_STEP2 = "retryStep2";
+    public static final String PRE_STEP = "preStep";
 
     public static final String END_EXCLUSIVE = "END_EXCLUSIVE";
     public static final String FAIL_CNT = "FAIL_CNT";
@@ -41,7 +40,8 @@ public class RetryJobConfig {
     @Bean
     public Job retryJob() {
         return jobBuilderFactory.get(RetryJobTestEnvConfig.RETRY_JOB)
-                                .start(retryStep1())
+                                .start(preStep())
+                                .next(retryStep1())
 //                                .next(retryStep2())
 //                                .preventRestart()
                                 .build();
@@ -53,6 +53,18 @@ public class RetryJobConfig {
                                  .<String, String>chunk(10)
                                  .reader(retryReader)
                                  .writer(retryWriter)
+                                 .build();
+    }
+
+    @Bean
+    public Step preStep() {
+        return stepBuilderFactory.get(PRE_STEP)
+                                 .tasklet((stepContribution, chunkContext) -> {
+                                     stepContribution.getStepExecution()
+                                                     .getExecutionContext()
+                                                     .putLong(FAIL_CNT, 0L);
+                                     return RepeatStatus.FINISHED;
+                                 })
                                  .build();
     }
 

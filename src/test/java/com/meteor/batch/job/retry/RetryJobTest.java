@@ -76,22 +76,39 @@ public class RetryJobTest {
 
         final Object o = jobExecution.getStepExecutions()
                                      .stream()
+                                     .filter(step -> RetryJobConfig.TEST_STEP1.equals(step.getStepName()))
                                      .findFirst()
                                      .get()
                                      .getExecutionContext()
                                      .get(RetryJobConfig.SUM);
         Assertions.assertEquals((FAIL_THROW_CNT - 1) * FAIL_THROW_CNT / 2, o);
 
+        final Object failCnt1 = jobExecution.getStepExecutions()
+                                            .stream()
+                                            .filter(step -> RetryJobConfig.PRE_STEP.equals(step.getStepName()))
+                                            .findFirst()
+                                            .get()
+                                            .getExecutionContext()
+                                            .get(RetryJobConfig.FAIL_CNT);
+        Assertions.assertEquals(0L, failCnt1);
+
         //org.springframework.batch.core.repository.JobRestartException: JobInstance already exists and is not restartable
         //.preventRestart() 설정되어있을경우 위와같은 에러 발생
         final JobExecution jobExecution2 = jobLauncherTestUtils.launchJob(jobParameters);
         final Object o2 = jobExecution2.getStepExecutions()
-                                     .stream()
-                                     .findFirst()
-                                     .get()
-                                     .getExecutionContext()
-                                     .get(RetryJobConfig.SUM);
+                                       .stream()
+                                       .filter(step -> RetryJobConfig.TEST_STEP1.equals(step.getStepName()))
+                                       .findFirst()
+                                       .get()
+                                       .getExecutionContext()
+                                       .get(RetryJobConfig.SUM);
         Assertions.assertEquals((END_EXCLUSIVE - 1) * END_EXCLUSIVE / 2, o2);
+
+        //Executing step: [preStep] 는 성공한 Step이기 때문에 skip 됨
+        Assertions.assertFalse(jobExecution2.getStepExecutions()
+                                            .stream()
+                                            .filter(step -> RetryJobConfig.PRE_STEP.equals(step.getStepName()))
+                                            .findFirst().isPresent());
     }
 
 }
