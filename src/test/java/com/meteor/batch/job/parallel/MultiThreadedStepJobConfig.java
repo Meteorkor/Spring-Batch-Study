@@ -12,8 +12,6 @@ import org.springframework.core.task.SimpleAsyncTaskExecutor;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.stereotype.Component;
 
-import com.meteor.batch.job.retry.RetryJobTestEnvConfig;
-
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
@@ -30,7 +28,7 @@ public class MultiThreadedStepJobConfig {
 
     @Bean
     public Job multiThreadedStepJob() {
-        return jobBuilderFactory.get(RetryJobTestEnvConfig.RETRY_JOB)
+        return jobBuilderFactory.get(JOB_NAME)
                                 .start(multiThreadedStepJobStep1())
                                 .build();
     }
@@ -39,13 +37,26 @@ public class MultiThreadedStepJobConfig {
     public Step multiThreadedStepJobStep1() {
         return stepBuilderFactory.get(STEP1_NAME)
                                  .tasklet(((stepContribution, chunkContext) -> {
+                                     stepContribution.getStepExecution()
+                                                     .getJobExecution()
+                                                     .getExecutionContext()
+                                                     .put(Thread.currentThread().getName(), Boolean.TRUE);
+//                                     System.out.println(Thread.currentThread().getName() + "]test!!");
                                      return RepeatStatus.FINISHED;
                                  }))
+                                 .taskExecutor(taskExecutor())
                                  .build();
     }
 
     public TaskExecutor taskExecutor() {
-        return new SimpleAsyncTaskExecutor();
+//        return new TaskExecutorBuilder().corePoolSize(2)
+//                                        .maxPoolSize(2)
+//                .
+//                                        .build();
+        //SimpleAsyncTaskExecutor-
+        final SimpleAsyncTaskExecutor simpleAsyncTaskExecutor = new SimpleAsyncTaskExecutor();
+        simpleAsyncTaskExecutor.setConcurrencyLimit(10);
+        return simpleAsyncTaskExecutor;
     }
 
     @Component

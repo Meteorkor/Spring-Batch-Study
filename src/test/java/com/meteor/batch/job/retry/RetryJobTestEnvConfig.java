@@ -9,7 +9,6 @@ import org.springframework.context.annotation.Primary;
 
 import lombok.RequiredArgsConstructor;
 
-@Configuration
 @RequiredArgsConstructor
 public class RetryJobTestEnvConfig {
 
