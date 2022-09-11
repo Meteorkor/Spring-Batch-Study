@@ -41,7 +41,7 @@ public class MultiThreadedStepJobTest {
         final JobExecution jobExecution = jobLauncherTestUtils.launchJob(jobParameters);
         Assertions.assertEquals(BatchStatus.COMPLETED, jobExecution.getStatus());
         Assertions.assertEquals(ExitStatus.COMPLETED.getExitCode(), jobExecution.getExitStatus().getExitCode());
-        Assertions.assertEquals(5, jobExecution.getExecutionContext().entrySet().size());
+        Assertions.assertEquals(MultiThreadedStepJobConfig.THREAD_CNT, jobExecution.getExecutionContext().entrySet().size());
     }
 
 }

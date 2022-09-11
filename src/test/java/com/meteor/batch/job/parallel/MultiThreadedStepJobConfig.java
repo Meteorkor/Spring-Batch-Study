@@ -6,10 +6,12 @@ import org.springframework.batch.core.configuration.annotation.JobBuilderFactory
 import org.springframework.batch.core.configuration.annotation.JobScope;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.repeat.RepeatStatus;
+import org.springframework.boot.task.TaskExecutorBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
 import org.springframework.core.task.TaskExecutor;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
 
 import lombok.Getter;
@@ -21,6 +23,7 @@ import lombok.RequiredArgsConstructor;
 public class MultiThreadedStepJobConfig {
     public static final String JOB_NAME = "multiThreadedStepJob";
     public static final String STEP1_NAME = "multiThreadedStepJobStep1";
+    public static final int THREAD_CNT = 2;
 
     private final JobBuilderFactory jobBuilderFactory;
     private final StepBuilderFactory stepBuilderFactory;
@@ -41,22 +44,21 @@ public class MultiThreadedStepJobConfig {
                                                      .getJobExecution()
                                                      .getExecutionContext()
                                                      .put(Thread.currentThread().getName(), Boolean.TRUE);
-//                                     System.out.println(Thread.currentThread().getName() + "]test!!");
+
                                      return RepeatStatus.FINISHED;
                                  }))
                                  .taskExecutor(taskExecutor())
+
                                  .build();
     }
 
     public TaskExecutor taskExecutor() {
-//        return new TaskExecutorBuilder().corePoolSize(2)
-//                                        .maxPoolSize(2)
-//                .
-//                                        .build();
-        //SimpleAsyncTaskExecutor-
-        final SimpleAsyncTaskExecutor simpleAsyncTaskExecutor = new SimpleAsyncTaskExecutor();
-        simpleAsyncTaskExecutor.setConcurrencyLimit(10);
-        return simpleAsyncTaskExecutor;
+        final ThreadPoolTaskExecutor build = new TaskExecutorBuilder()
+                .corePoolSize(THREAD_CNT)
+                .maxPoolSize(THREAD_CNT)
+                .build();
+        build.afterPropertiesSet();
+        return build;
     }
 
     @Component
