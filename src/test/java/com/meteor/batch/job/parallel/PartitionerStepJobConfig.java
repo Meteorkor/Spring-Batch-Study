@@ -35,6 +35,9 @@ public class PartitionerStepJobConfig {
     public static final String STEP2_INNER = STEP2_NAME + "_inner";
     public static final int STEP2_CNT = 10;
 
+    public static final String STEP3_NAME = "partitionerStepJobStep3";
+    public static final String STEP3_INNER = STEP3_NAME + "_inner";
+
     private final JobBuilderFactory jobBuilderFactory;
     private final StepBuilderFactory stepBuilderFactory;
     private final PartitionerStepJobConfig.JobParameter jobParameter;
@@ -102,6 +105,41 @@ public class PartitionerStepJobConfig {
     }
 
     public Partitioner step2Partitioner() {
+        return gridSize -> {
+            Map<String, ExecutionContext> map = new HashMap<>();
+            IntStream.range(0, STEP2_CNT).forEach(n ->
+                                                          map.put("context_" + n, new ExecutionContext())
+            );
+            return map;
+        };
+    }
+
+
+//TODO Partitioner + chunkStep
+    @Bean
+    public Step partitionerStepJobStep3() {
+        return stepBuilderFactory.get(STEP3_NAME)
+                                 .partitioner(STEP3_NAME + "Partitioner", step3Partitioner())
+                                 .step(partitionerStepJobStep3Inner())
+                                 .build();
+    }
+
+    @Bean
+    public Step partitionerStepJobStep3Inner() {
+        return stepBuilderFactory.get(STEP3_INNER)
+                                 .tasklet((stepContribution, chunkContext) -> {
+                                     final ExecutionContext executionContext =
+                                             stepContribution.getStepExecution()
+                                                             .getExecutionContext();
+
+                                     executionContext.putInt(CALL_CNT_KEY,
+                                                             executionContext.getInt(CALL_CNT_KEY, 0) + 1);
+
+                                     return RepeatStatus.FINISHED;
+                                 }).build();
+    }
+
+    public Partitioner step3Partitioner() {
         return gridSize -> {
             Map<String, ExecutionContext> map = new HashMap<>();
             IntStream.range(0, STEP2_CNT).forEach(n ->
