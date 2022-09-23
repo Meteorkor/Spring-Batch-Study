@@ -1,5 +1,7 @@
 package com.meteor.batch.basic;
 
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -162,6 +164,23 @@ public class StringTest {
 
     String splitDataReplace(int n) {
         return String.format(FULL_TEXT, n);
+    }
+
+    @Test
+    void markSupported() {
+        String str = "text";
+        InputStream is = new ByteArrayInputStream(str.getBytes());
+        Assertions.assertTrue(is.markSupported());
+    }
+
+    @Test
+    void subStringTest() {
+        String str = "0123456789";
+
+        Assertions.assertEquals(str, str.substring(0));
+        Assertions.assertEquals("89", str.substring(8));
+        Assertions.assertEquals(str, str.substring(0, str.length()));
+        Assertions.assertEquals("89", str.substring(8, str.length()));
     }
 
 }
