@@ -14,10 +14,9 @@ import com.meteor.batch.profile.component.DevServiceModule;
 import com.meteor.batch.profile.component.ExcludedServiceModule;
 import com.meteor.batch.profile.component.PrdServiceModule;
 
-@SpringBootTest
+@SpringBootTest(classes = ComponentExcludeConfig.class)
 @ActiveProfiles(ProfileConfig.PROFILE_DEV)
-public class ProfileTest {
-
+public class ComponentExceptTest {
     @Autowired
     private ApplicationContext applicationContext;
 
@@ -45,8 +44,9 @@ public class ProfileTest {
 
     @Test
     void excludedServiceModule() {
-        final ExcludedServiceModule bean = applicationContext.getBean(ExcludedServiceModule.class);
-        Assertions.assertNotNull(bean);
+        Assertions.assertThrows(NoSuchBeanDefinitionException.class, () -> {
+            final ExcludedServiceModule bean = applicationContext.getBean(ExcludedServiceModule.class);
+        });
     }
 
 }
