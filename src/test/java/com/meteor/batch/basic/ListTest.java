@@ -1,13 +1,17 @@
 package com.meteor.batch.basic;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.stream.IntStream;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.util.CollectionUtils;
+
+import com.google.common.collect.Lists;
 
 public class ListTest {
 
@@ -70,6 +74,28 @@ public class ListTest {
         Assertions.assertThrows(NoSuchElementException.class, () -> {
             emptyIter.next();
         });
+    }
+
+    @Test
+    void constructTest() {
+        int SIZE = 10;
+        List<String> list = new ArrayList<>(SIZE);
+        Assertions.assertEquals(0, list.size());
+
+        IntStream.range(0, SIZE * 2).forEach(n -> {
+            list.add(String.valueOf(n));
+        });
+        Assertions.assertEquals(SIZE * 2, list.size());
+    }
+
+    @Test
+    void compareTest() {
+        List<String> list_1 = Lists.newArrayList("a", "b", "c", "d");
+        List<String> list_2 = Lists.newArrayList("a", "b", "c", "d");
+
+        Assertions.assertNotEquals(System.identityHashCode(list_1), System.identityHashCode(list_2));
+        Assertions.assertEquals(list_1, list_2);
+        Assertions.assertTrue(list_1.equals(list_2));
     }
 
 }
