@@ -9,8 +9,9 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 public class ThreadLocalTest {
-    
+
     private ThreadLocal<String> threadLocalStr = new ThreadLocal<>();
+    private InheritableThreadLocal<String> inheritableThreadLocal = new InheritableThreadLocal<>();
 
     @Test
     void simpleTest() {
@@ -38,6 +39,51 @@ public class ThreadLocalTest {
         Assertions.assertEquals(str, threadLocalStr.get());
     }
 
-    //TODO InheritableThreadLocal Test
+    @Test
+    void inheritableThreadLocalSimpleTest() {
+        final String str = "str";
+        Assertions.assertNull(inheritableThreadLocal.get());
+
+        inheritableThreadLocal.set(str);
+        Assertions.assertEquals(str, inheritableThreadLocal.get());
+
+        inheritableThreadLocal.remove();
+        Assertions.assertNull(inheritableThreadLocal.get());
+    }
+
+    @Test
+    void inheritableThreadLocalOtherThreadTest() throws ExecutionException, InterruptedException {
+        final String str = "str";
+        inheritableThreadLocal.set(str);
+
+        final ExecutorService executorService = Executors.newFixedThreadPool(3);
+        final Future<?> submit = executorService.submit(() -> {
+//            Assertions.assertNull(inheritableThreadLocal.get());
+            Assertions.assertEquals(str, inheritableThreadLocal.get());
+        });
+
+        submit.get();
+
+        Assertions.assertEquals(str, inheritableThreadLocal.get());
+    }
+
+    @Test
+    void inheritableThreadLocalOtherThreadRemoveTest() throws ExecutionException, InterruptedException {
+        final String str = "str";
+        inheritableThreadLocal.set(str);
+
+        final ExecutorService executorService = Executors.newFixedThreadPool(3);
+        final Future<?> submit = executorService.submit(() -> {
+//            Assertions.assertNull(inheritableThreadLocal.get());
+            Assertions.assertEquals(str, inheritableThreadLocal.get());
+            inheritableThreadLocal.remove();
+            Assertions.assertNotEquals(str, inheritableThreadLocal.get());
+        });
+
+        submit.get();
+
+        Assertions.assertEquals(str, inheritableThreadLocal.get());
+        //Thread 생성시 카피가 되는듯함
+    }
 
 }
