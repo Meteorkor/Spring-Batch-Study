@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.util.StopWatch;
 
+import com.google.common.base.Strings;
 import com.meteor.batch.TestTimeUtils;
 
 public class StringTest {
@@ -182,5 +183,56 @@ public class StringTest {
         Assertions.assertEquals(str, str.substring(0, str.length()));
         Assertions.assertEquals("89", str.substring(8, str.length()));
     }
+
+    @Test
+    void replaceTest_basic() {
+        {
+            String first = "A" + Strings.repeat("_", 1_000_000);
+
+            final String replace = first.replace("A", "B");
+            final String replaceAll = first.replaceAll("A", "B");
+            final String replaceFirst = first.replaceFirst("A", "B");
+
+            Assertions.assertEquals(replace, replaceAll);
+            Assertions.assertEquals(replace, replaceFirst);
+        }
+        {
+            String first = "A" + Strings.repeat("_", 1_000_000) + "A";
+
+            final String replace = first.replace("A", "B");
+            final String replaceAll = first.replaceAll("A", "B");
+            final String replaceFirst = first.replaceFirst("A", "B");
+
+            Assertions.assertEquals(replace, replaceAll);
+            Assertions.assertNotEquals(replace, replaceFirst);
+            Assertions.assertEquals(replace, replaceFirst.replaceFirst("A", "B"));
+        }
+        {
+            String str = "a,b,";
+            final String replace = str.replace(",", "B");
+            final String replaceAll = str.replaceAll(",", "B");
+            final String replaceFirst = str.replaceFirst(",", "B");
+            System.out.println("replace: " + replace);
+            System.out.println("replaceAll: " + replaceAll);
+            System.out.println("replaceFirst: " + replaceFirst);
+            Assertions.assertEquals("aBbB", replace);
+            Assertions.assertEquals("aBbB", replaceAll);
+            Assertions.assertEquals("aBb,", replaceFirst);
+        }
+    }
+
+    //TODO
+    @Test
+    void replaceTest_pef_one_first() {
+
+    }
+
+    //TODO
+    @Test
+    void replaceTest_pef_one_start_end() {
+
+    }
+
+    //replace, replaceAll, replaceFirst 각 성능 및 동작 확인
 
 }
