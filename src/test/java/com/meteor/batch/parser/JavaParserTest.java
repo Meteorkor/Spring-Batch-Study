@@ -32,7 +32,7 @@ public class JavaParserTest {
         final TypeDeclaration typeDeclaration = javaModel.typeDeclaration();
         Assertions.assertEquals("TestVariableClass1", typeDeclaration.getName().getIdentifier());
 
-        final List<FieldDeclaration> fieldDeclarations = javaModel.bodyDeclarations();
+        final List<FieldDeclaration> fieldDeclarations = javaModel.fieldDeclaration();
 
         //        private static OutTestImpl outTestStatic;
         {

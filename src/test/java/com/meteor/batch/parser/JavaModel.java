@@ -4,7 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
+import org.eclipse.jdt.core.dom.BodyDeclaration;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.FieldDeclaration;
 import org.eclipse.jdt.core.dom.ImportDeclaration;
@@ -23,6 +25,10 @@ public class JavaModel {
         return new JavaModel(compilationUnit);
     }
 
+    public String getPackage() {
+        return compilationUnit.getPackage().getName().getFullyQualifiedName();
+    }
+
     public List<ImportDeclaration> imports() {
         return new ArrayList(compilationUnit.imports());
     }
@@ -39,12 +45,27 @@ public class JavaModel {
         return typeDeclaration;
     }
 
-    public List<FieldDeclaration> bodyDeclarations() {
-        return new ArrayList<FieldDeclaration>(typeDeclaration.bodyDeclarations());
+    public List<BodyDeclaration> bodyDeclarations() {
+        return new ArrayList<BodyDeclaration>(typeDeclaration.bodyDeclarations());
     }
 
-    public List<FieldDeclaration> bodyDeclarations(Function<FieldDeclaration, Boolean> filter) {
+    public List<BodyDeclaration> bodyDeclarations(Function<BodyDeclaration, Boolean> filter) {
         return bodyDeclarations().stream().filter(filter::apply).collect(Collectors.toList());
+    }
+
+    public List<FieldDeclaration> fieldDeclaration() {
+        return bodyDeclarations().stream()
+                                 .flatMap(bodyDec -> {
+                                     if (bodyDec instanceof FieldDeclaration) {
+                                         return Stream.of(
+                                                 (FieldDeclaration) bodyDec);
+                                     }
+                                     return Stream.empty();
+                                 }).collect(Collectors.toList());
+    }
+
+    public List<FieldDeclaration> fieldDeclaration(Function<FieldDeclaration, Boolean> filter) {
+        return fieldDeclaration().stream().filter(filter::apply).collect(Collectors.toList());
     }
 
 }
