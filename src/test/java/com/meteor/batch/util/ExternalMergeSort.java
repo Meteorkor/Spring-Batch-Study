@@ -8,11 +8,13 @@ import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import lombok.Builder;
+import lombok.SneakyThrows;
 
 @Builder
 public class ExternalMergeSort<T> {
@@ -31,6 +33,20 @@ public class ExternalMergeSort<T> {
         //모든 파일에 각각 다 쓴 후 Merge 진행
 
         //TODO 작업예정
+
+        final List<File> fileList = divideSortedTempFile();
+        //peek(), poll() 방식 필요
+        final List<FileIterator<T>> fileIterators = fileList.stream().map(
+                file -> new FileIterator(file, lineToObjMapper)).collect(Collectors.toList()
+        );
+
+        //작업중
+//        while (fileIterators.size() != 0) {
+//            fileIterators.stream().map(fileIterator -> fileIterator.peek()).max(comparator).
+//            T peek =
+//
+//        }
+
         return null;
     }
 
@@ -46,7 +62,7 @@ public class ExternalMergeSort<T> {
 
             while ((readLineStr = bufferedReader.readLine()) != null) {
                 if (readLineCnt >= elementLoadMaxCnt) {
-                    flush(tempFile, lines);
+                    sortAndWrite(tempFile, lines);
                     fileList.add(tempFile);
 
                     //init
@@ -62,7 +78,7 @@ public class ExternalMergeSort<T> {
             }
 
             if (!lines.isEmpty()) {
-                flush(tempFile, lines);
+                sortAndWrite(tempFile, lines);
                 fileList.add(tempFile);
             }
 
@@ -73,12 +89,57 @@ public class ExternalMergeSort<T> {
         return fileList;
     }
 
-    private void flush(File tempFile, List<T> lines) throws IOException {
+    private void sortAndWrite(File tempFile, List<T> lines) throws IOException {
         Files.write(tempFile.toPath(),
                     lines.stream().sorted(comparator)
                          .map(objToLineMapper::apply)
                          .collect(Collectors.toList()),
                     StandardOpenOption.APPEND);
+    }
+
+    class FileIterator<T> implements Iterator<T> {
+        private final File targetFile;
+        private final BufferedReader bufferedReader;
+        private final Function<String, T> lineToObjMapper;
+        private boolean isClosed = false;
+
+        private T value;
+
+        @SneakyThrows
+        public FileIterator(File targetFile, Function<String, T> lineToObjMapper) {
+            this.targetFile = targetFile;
+            this.bufferedReader = Files.newBufferedReader(targetFile.toPath());
+            this.lineToObjMapper = lineToObjMapper;
+        }
+
+        public T peek() {
+            if (hasNext()) {return this.value;}
+
+            return null;
+        }
+
+        @SneakyThrows
+        @Override
+        public boolean hasNext() {
+            if (this.value == null && !isClosed) {
+                String tempStr = bufferedReader.readLine();
+                if (tempStr != null) {
+                    this.value = lineToObjMapper.apply(tempStr);
+                } else {
+                    isClosed = true;
+                    bufferedReader.close();
+                }
+            }
+
+            return this.value != null;
+        }
+
+        @Override
+        public T next() {
+            T result = peek();
+            this.value = null;
+            return result;
+        }
     }
 
 }
