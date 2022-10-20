@@ -1,10 +1,12 @@
 package com.meteor.batch.util;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -22,26 +24,48 @@ public class ExternalMergeSortTest {
     void sort() throws IOException {
         File tempFile = File.createTempFile("temp", "sufff");
         tempFile.deleteOnExit();
+        int elementLoadMaxCnt = 100_000;
 
-        final int endExclusive = 1000;
+//        final int endExclusive = 1000;
+        final int endExclusive = 100_000_000;//750MB
+//        final int endExclusive = 10_000_000;75MB
 
-        final List<Integer> collect = IntStream.range(0, endExclusive).boxed().collect(Collectors.toList());
-        Collections.shuffle(collect);
-        Files.write(tempFile.toPath(),
-                    collect.stream().map(String::valueOf).collect(Collectors.toList()),
-                    StandardOpenOption.APPEND);
+
+        try (BufferedWriter bufferedWriter = Files.newBufferedWriter(tempFile.toPath(),
+                                                                     StandardOpenOption.APPEND)) {
+            List<String> numList = new ArrayList<>(elementLoadMaxCnt);
+            for (int i = 0; i < endExclusive; i++) {
+                if (numList.size() == elementLoadMaxCnt) {
+                    Collections.shuffle(numList);
+                    bufferedWriter.write(
+                            numList.stream().collect(Collectors.joining("\n")));
+                    bufferedWriter.newLine();
+                    numList = new ArrayList<>(elementLoadMaxCnt);
+                }
+                numList.add(String.valueOf(i));
+            }
+
+            if (!numList.isEmpty()) {
+                bufferedWriter.write(
+                        numList.stream().collect(Collectors.joining("\n")));
+                bufferedWriter.newLine();
+            }
+        }
 
         final ExternalMergeSort fileSort = ExternalMergeSort.builder()
-                                                            .elementLoadMaxCnt(endExclusive / 10)
+                                                            .elementLoadMaxCnt(elementLoadMaxCnt)
                                                             .targetFile(tempFile)
                                                             .objToLineMapper(obj -> obj.toString())
                                                             .lineToObjMapper(line -> line)
                                                             .comparator(Comparator.comparing(n -> {
+                                                                if (n == null) {return Integer.MIN_VALUE;}
                                                                 return Integer.valueOf(String.valueOf(n));
                                                             }))
                                                             .build();
 
         final File sortedFile = fileSort.sort();
+
+        System.out.println("sortedFile.getAbsolutePath(): " + sortedFile.getAbsolutePath());
 
         try (final BufferedReader bufferedReader = Files.newBufferedReader(sortedFile.toPath())) {
             String readLine;

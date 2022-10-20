@@ -1,6 +1,7 @@
 package com.meteor.batch.util;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -27,27 +28,36 @@ public class ExternalMergeSort<T> {
     private final Function<T, String> objToLineMapper;
     private final Comparator<T> comparator;
 
+    @SneakyThrows
     public File sort() throws FileNotFoundException {
 
         //elemetLoadMaxCnt 만큼 로드해서 정렬 후 File에 임시 파일에 Write
         //모든 파일에 각각 다 쓴 후 Merge 진행
 
-        //TODO 작업예정
-
-        final List<File> fileList = divideSortedTempFile();
-        //peek(), poll() 방식 필요
-        final List<FileIterator<T>> fileIterators = fileList.stream().map(
+        final List<FileIterator> fileIterators = divideSortedTempFile().stream().map(
                 file -> new FileIterator(file, lineToObjMapper)).collect(Collectors.toList()
         );
 
-        //작업중
-//        while (fileIterators.size() != 0) {
-//            fileIterators.stream().map(fileIterator -> fileIterator.peek()).max(comparator).
-//            T peek =
-//
-//        }
+        final File tempFile = File.createTempFile("sorted", "suffix");
 
-        return null;
+        try (final BufferedWriter bufferedWriter = Files.newBufferedWriter(tempFile.toPath())) {
+            while (fileIterators.size() != 0) {
+                final FileIterator tFileIterator = fileIterators.stream().min(
+                        (fileIterator1, fileIterator2) -> {
+                            return comparator.compare(fileIterator1.peek(), fileIterator2.peek());
+                        }).get();
+
+                final T next = tFileIterator.next();
+                if (next == null) {
+                    fileIterators.remove(tFileIterator);
+                } else {
+                    bufferedWriter.write(objToLineMapper.apply(next));
+                    bufferedWriter.newLine();
+                }
+            }
+        }
+
+        return tempFile;
     }
 
     private List<File> divideSortedTempFile() {
@@ -97,7 +107,7 @@ public class ExternalMergeSort<T> {
                     StandardOpenOption.APPEND);
     }
 
-    class FileIterator<T> implements Iterator<T> {
+    class FileIterator implements Iterator<T> {
         private final File targetFile;
         private final BufferedReader bufferedReader;
         private final Function<String, T> lineToObjMapper;
