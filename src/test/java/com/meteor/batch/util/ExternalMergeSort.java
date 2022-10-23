@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
+import java.util.TreeSet;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -40,16 +41,22 @@ public class ExternalMergeSort<T> {
 
         final File tempFile = File.createTempFile("sorted", "suffix");
 
+        TreeSet<FileIterator> treeSet = new TreeSet<>((fileIterator1, fileIterator2) -> {
+            return comparator.compare(fileIterator1.peek(), fileIterator2.peek());
+        });
+        treeSet.addAll(fileIterators);
+
         try (final BufferedWriter bufferedWriter = Files.newBufferedWriter(tempFile.toPath())) {
-            while (fileIterators.size() != 0) {
-                final FileIterator tFileIterator = fileIterators.stream().min(
-                        (fileIterator1, fileIterator2) -> {
-                            return comparator.compare(fileIterator1.peek(), fileIterator2.peek());
-                        }).get();
+            while (!fileIterators.isEmpty()) {
+                final FileIterator tFileIterator = treeSet.pollFirst();
 
                 final T next = tFileIterator.next();
+                treeSet.add(tFileIterator);
+//                treeSet.addAll(fileIterators);
+
                 if (next == null) {
                     fileIterators.remove(tFileIterator);
+                    treeSet.remove(tFileIterator);
                 } else {
                     bufferedWriter.write(objToLineMapper.apply(next));
                     bufferedWriter.newLine();

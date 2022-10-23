@@ -17,6 +17,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.util.StopWatch;
 
 public class ExternalMergeSortTest {
 
@@ -27,9 +28,8 @@ public class ExternalMergeSortTest {
         int elementLoadMaxCnt = 100_000;
 
 //        final int endExclusive = 1000;
-        final int endExclusive = 100_000_000;//750MB
-//        final int endExclusive = 10_000_000;75MB
-
+//        final int endExclusive = 100_000_000;//750MB
+        final int endExclusive = 10_000_000;//75MB
 
         try (BufferedWriter bufferedWriter = Files.newBufferedWriter(tempFile.toPath(),
                                                                      StandardOpenOption.APPEND)) {
@@ -63,7 +63,17 @@ public class ExternalMergeSortTest {
                                                             }))
                                                             .build();
 
+        StopWatch stopWatch = new StopWatch();
+        stopWatch.start();
+
         final File sortedFile = fileSort.sort();
+        stopWatch.stop();
+
+        System.out.println("stopWatch.getTotalTimeMillis() : " + stopWatch.getTotalTimeMillis());
+        //stopWatch.getTotalTimeMillis() : 26293
+        //treeSet addAll    stopWatch.getTotalTimeMillis() : 90025
+        //treeSet addAll    stopWatch.getTotalTimeMillis() : 89393
+        //treeSet optimize stopWatch.getTotalTimeMillis() : 9316
 
         System.out.println("sortedFile.getAbsolutePath(): " + sortedFile.getAbsolutePath());
 
