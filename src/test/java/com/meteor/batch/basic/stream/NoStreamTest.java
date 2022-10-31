@@ -1,6 +1,7 @@
 package com.meteor.batch.basic.stream;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,6 +38,78 @@ public class NoStreamTest {
             nameEmpMap.put(emp.getEname(), emp);
         }
         //nameEmpMap
+    }
+
+    @Test
+    void firstTest() {
+        //empty list
+        final List<Object> objects = Collections.emptyList();
+        Assertions.assertThrows(IndexOutOfBoundsException.class, () -> {
+            final Object o = objects.get(0);
+        });
+
+        final List<Emp> empList = getEmpList();//db 조회라는 가정으로, 변수 선언 필요
+
+        if (empList.isEmpty()) {
+            final Emp emp = empList.get(0);
+            Assertions.assertNotNull(emp);
+        }
+    }
+
+    @Test
+    void filterAndFirstTest() {
+        // %2==0
+        List<Integer> evenList = new ArrayList<>();
+
+        for (Integer number : getNumberList()) {//filter, all List
+            if (number % 2 == 0) {
+                evenList.add(number);
+            }
+        }
+
+//        for (Integer number : getNumberList()) {//filter, one
+//            if (number % 2 == 0) {
+//                evenList.add(number);
+//                break;
+//            }
+//        }
+
+        if (!evenList.isEmpty()) {
+            final Integer integer = evenList.get(0);//doing
+        } else {
+            //throw Exception
+            throw new RuntimeException();
+        }
+    }
+
+    @Test
+    void filterAndFirstAndConvert() {
+        // %2==0
+        List<Integer> evenList = new ArrayList<>();
+
+        for (Integer number : getNumberList()) {
+            if (number % 2 == 0) {
+                evenList.add(number);
+            }
+        }
+
+        assertionEven(evenList);
+
+        Emp emp = null;
+
+        if (!evenList.isEmpty()) {
+            final Integer empno = evenList.get(0);
+            emp = Emp.builder()
+                     .empno(empno)
+                     .ename("name:" + empno)
+                     .build();
+
+            //doing
+        } else {
+            //Not working throw Exception
+        }
+
+        //emp; //doing
     }
 
     //mock

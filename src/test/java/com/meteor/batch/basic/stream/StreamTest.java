@@ -1,7 +1,9 @@
 package com.meteor.batch.basic.stream;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -29,6 +31,38 @@ public class StreamTest {
                 .stream()
                 .collect(Collectors.toMap(Emp::getEname, Function.identity()));
         //nameEmpMap
+    }
+
+    @Test
+    void firstTest() {
+        //empty list
+        final List<Object> objects = Collections.emptyList();
+        final Optional<Object> first = objects.stream().findFirst();
+        Assertions.assertFalse(first.isPresent());
+
+        final Optional<Emp> first1 = getEmpList().stream().findFirst();
+        Assertions.assertNotNull(first1.get());
+    }
+
+    @Test
+    void filterAndFirstTest() {
+        final Integer num = getNumberList().stream()
+                                       .filter(n -> n % 2 == 0)//filter
+                                       .findFirst()
+                                       .orElseThrow(RuntimeException::new);
+    }
+
+    @Test
+    void filterAndFirstAndConvert() {
+        final Emp emp = getNumberList().stream()
+                                       .filter(n -> n % 2 == 0)//filter
+                                       .findFirst()
+                                       .map(n -> Emp.builder()//First
+                                                    .empno(n)
+                                                    .ename("name:" + n)
+                                                    .build())
+                                       .orElseThrow(RuntimeException::new);
+
     }
 
     //mock
