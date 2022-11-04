@@ -221,6 +221,36 @@ public class StringTest {
         }
     }
 
+    //perf replace, replaceAll
+
+    @Test
+    void replaceVerseReplaceAll() {
+        int REPEAT_CNT = 100;
+        String first = "A" + Strings.repeat("_", 1_000_000) + "A";
+        String expect = "B" + Strings.repeat("_", 1_000_000) + "B";
+
+        final long replaceTime = TestTimeUtils.processTime(() -> {
+            IntStream.range(0, REPEAT_CNT).forEach(n -> {
+                final String replace1 = first.replace("A", "B");
+                Assertions.assertEquals(expect, replace1);
+            });
+        });
+
+        final long replaceAllTime = TestTimeUtils.processTime(() -> {
+            IntStream.range(0, REPEAT_CNT).forEach(n -> {
+                final String replace1 = first.replaceAll("A", "B");
+                Assertions.assertEquals(expect, replace1);
+            });
+        });
+
+        System.out.println("replaceTime : " + replaceTime);
+        System.out.println("replaceAllTime : " + replaceAllTime);
+//        replaceTime : 84
+//        replaceAllTime : 355
+//        replaceTime : 93
+//        replaceAllTime : 481
+    }
+
     //TODO
     @Test
     void replaceTest_pef_one_first() {
